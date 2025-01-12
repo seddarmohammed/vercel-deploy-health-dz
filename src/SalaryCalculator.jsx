@@ -17,7 +17,7 @@ const SalaryCalculator = () => {
 
   const translations = {
     fr: {
-      welcome: "Calculateur de Salaire",
+      welcome: "Calculateur de Salaire de Personnel",
       chooseLang: "Choisissez votre langue",
       next: "Suivant",
       corps: "Corps",
