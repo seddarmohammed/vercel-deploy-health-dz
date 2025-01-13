@@ -7,12 +7,16 @@ import {
   Download,
   Calculator,
   DollarSign,
-  LayoutDashboard,
 } from "lucide-react";
 import { Card, CardTitle, CardContent } from "./components/ui/card";
 import { Alert, AlertDescription } from "./components/ui/alert";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import translations from "./data/translations";
+import corpsList from "./data/corpsList";
+import gradesList from "./data/gradesList";
+import corpsData from "./data/corpsData";
+import Header from "./components/Header"; // Importation du composant Header
 
 const SalaryCalculator = () => {
   const [step, setStep] = useState(1);
@@ -29,274 +33,6 @@ const SalaryCalculator = () => {
 
   // Référence pour la fiche de paie
   const payslipRef = useRef();
-
-  const translations = {
-    fr: {
-      welcome: "Calculateur de Salaire de Personnel",
-      chooseLang: "Choisissez votre langue",
-      next: "Suivant",
-      corps: "Corps",
-      grade: "Grade",
-      category: "Catégorie",
-      echelon: "Échelon",
-      index: "Indice",
-      selectCorps: "Sélectionnez votre corps",
-      selectGrade: "Sélectionnez votre grade",
-      selectEchelon: "Sélectionnez votre échelon",
-      calculate: "Calculer",
-      salary: "Salaire",
-      baseIndex: "Indice de base",
-      baseSalary: "Salaire de base",
-      allowances: "Indemnités",
-      deductions: "Retenues",
-      netSalary: "Salaire net",
-      exportPdf: "Exporter en PDF",
-      payslip: "Fiche de paie",
-      generalAllowance: "Indemnité générale",
-      specialAllowance: "Indemnité spéciale",
-      transportAllowance: "Indemnité de transport",
-      mutualInsurance: "Assurance mutuelle",
-      socialSecurity: "Sécurité sociale",
-      taxableIncome: "Revenu imposable",
-      incomeTax: "Impôt sur le revenu",
-      grossSalary: "Salaire brut",
-      back: "Retour",
-      dashboard: "Tableau de bord",
-      titles: [
-        "Bienvenue sur le Calculateur de Salaire",
-        "Calculez votre salaire facilement",
-        "Optimisez votre rémunération",
-      ],
-      descriptions: [
-        "Sélectionnez votre langue pour commencer.",
-        "Choisissez votre corps, grade et échelon.",
-        "Obtenez une fiche de paie détaillée.",
-      ],
-    },
-    ar: {
-      welcome: "حاسبة الراتب",
-      chooseLang: "اختر لغتك",
-      next: "التالي",
-      corps: "السلك",
-      grade: "الدرجة",
-      category: "الفئة",
-      echelon: "الرتبة",
-      index: "المؤشر",
-      selectCorps: "اختر السلك",
-      selectGrade: "اختر الدرجة",
-      selectEchelon: "اختر الرتبة",
-      calculate: "حساب",
-      salary: "الراتب",
-      baseIndex: "المؤشر الأساسي",
-      baseSalary: "الراتب الأساسي",
-      allowances: "التعويضات",
-      deductions: "الاقتطاعات",
-      netSalary: "الراتب الصافي",
-      exportPdf: "تصدير PDF",
-      payslip: "ورقة الراتب",
-      generalAllowance: "تعويض عام",
-      specialAllowance: "تعويض خاص",
-      transportAllowance: "تعويض النقل",
-      mutualInsurance: "التأمين التعاضدي",
-      socialSecurity: "الضمان الاجتماعي",
-      taxableIncome: "الدخل الخاضع للضريبة",
-      incomeTax: "ضريبة الدخل",
-      grossSalary: "الراتب الإجمالي",
-      back: "عودة",
-      dashboard: "لوحة التحكم",
-      titles: [
-        "مرحباً بكم في حاسبة الراتب",
-        "احسب راتبك بسهولة",
-        "حسن مكافأتك",
-      ],
-      descriptions: [
-        "اختر لغتك للبدء.",
-        "اختر السلك والدرجة والرتبة.",
-        "احصل على ورقة راتب مفصلة.",
-      ],
-    },
-  };
-
-  const corpsList = [
-    {
-      id: 1,
-      name_fr: "Enseignement Supérieur",
-      name_ar: "التعليم العالي",
-    },
-    {
-      id: 2,
-      name_fr: "Administration",
-      name_ar: "الإدارة",
-    },
-    {
-      id: 3,
-      name_fr: "Santé",
-      name_ar: "الصحة",
-    },
-    // Ajoutez d'autres corps selon vos besoins
-  ];
-
-  const gradesList = [
-    // Grades pour le corps "Enseignement Supérieur" (id: 1)
-    {
-      id: 1,
-      corp_id: 1,
-      name_fr: "Professeur de l'Enseignement Supérieur",
-      name_ar: "أستاذ التعليم العالي",
-      category: "A",
-    },
-    {
-      id: 2,
-      corp_id: 1,
-      name_fr: "Maître de Conférences",
-      name_ar: "أستاذ مساعد",
-      category: "A",
-    },
-    {
-      id: 3,
-      corp_id: 1,
-      name_fr: "Professeur Assistant",
-      name_ar: "أستاذ مساعد",
-      category: "A",
-    },
-    // Grades pour le corps "Administration" (id: 2)
-    {
-      id: 4,
-      corp_id: 2,
-      name_fr: "Administrateur en Chef",
-      name_ar: "مدير أول",
-      category: "A",
-    },
-    {
-      id: 5,
-      corp_id: 2,
-      name_fr: "Administrateur Principal",
-      name_ar: "مدير رئيسي",
-      category: "A",
-    },
-    {
-      id: 6,
-      corp_id: 2,
-      name_fr: "Administrateur",
-      name_ar: "مدير",
-      category: "B",
-    },
-    // Grades pour le corps "Santé" (id: 3)
-    {
-      id: 7,
-      corp_id: 3,
-      name_fr: "Médecin Chef",
-      name_ar: "طبيب رئيسي",
-      category: "A",
-    },
-    {
-      id: 8,
-      corp_id: 3,
-      name_fr: "Médecin Spécialiste",
-      name_ar: "طبيب متخصص",
-      category: "A",
-    },
-    {
-      id: 9,
-      corp_id: 3,
-      name_fr: "Infirmier Principal",
-      name_ar: "ممرض رئيسي",
-      category: "B",
-    },
-    // Ajoutez d'autres grades selon vos besoins
-  ];
-
-  const corpsData = {
-    // Structure des échelons par corps et par grade
-    1: {
-      // ID du corps "Enseignement Supérieur"
-      grades: {
-        1: {
-          // ID du grade "Professeur de l'Enseignement Supérieur"
-          category: "A",
-          echelons: Array.from({ length: 7 }, (_, i) => ({
-            number: i + 1,
-            index: 500 + i * 50,
-          })),
-        },
-        2: {
-          // ID du grade "Maître de Conférences"
-          category: "A",
-          echelons: Array.from({ length: 6 }, (_, i) => ({
-            number: i + 1,
-            index: 450 + i * 45,
-          })),
-        },
-        3: {
-          // ID du grade "Professeur Assistant"
-          category: "A",
-          echelons: Array.from({ length: 5 }, (_, i) => ({
-            number: i + 1,
-            index: 400 + i * 40,
-          })),
-        },
-      },
-    },
-    2: {
-      // ID du corps "Administration"
-      grades: {
-        4: {
-          // ID du grade "Administrateur en Chef"
-          category: "A",
-          echelons: Array.from({ length: 6 }, (_, i) => ({
-            number: i + 1,
-            index: 450 + i * 45,
-          })),
-        },
-        5: {
-          // ID du grade "Administrateur Principal"
-          category: "A",
-          echelons: Array.from({ length: 5 }, (_, i) => ({
-            number: i + 1,
-            index: 400 + i * 40,
-          })),
-        },
-        6: {
-          // ID du grade "Administrateur"
-          category: "B",
-          echelons: Array.from({ length: 4 }, (_, i) => ({
-            number: i + 1,
-            index: 350 + i * 35,
-          })),
-        },
-      },
-    },
-    3: {
-      // ID du corps "Santé"
-      grades: {
-        7: {
-          // ID du grade "Médecin Chef"
-          category: "A",
-          echelons: Array.from({ length: 6 }, (_, i) => ({
-            number: i + 1,
-            index: 450 + i * 45,
-          })),
-        },
-        8: {
-          // ID du grade "Médecin Spécialiste"
-          category: "A",
-          echelons: Array.from({ length: 5 }, (_, i) => ({
-            number: i + 1,
-            index: 400 + i * 40,
-          })),
-        },
-        9: {
-          // ID du grade "Infirmier Principal"
-          category: "B",
-          echelons: Array.from({ length: 4 }, (_, i) => ({
-            number: i + 1,
-            index: 350 + i * 35,
-          })),
-        },
-      },
-    },
-    // Ajoutez d'autres corps avec leurs grades et échelons
-  };
 
   const t = translations[language];
 
@@ -473,15 +209,11 @@ const SalaryCalculator = () => {
 
     return (
       <div className="space-y-6 pt-6 container mx-auto">
-        {" "}
-        {/* Réduction du padding-top de pt-24 à pt-12 */}
         <div
           className="bg-white rounded-lg p-6 sm:p-8 shadow-md"
           ref={payslipRef}
         >
           <div className="flex justify-between items-center mb-4">
-            {" "}
-            {/* Réduction de mb-6 à mb-4 */}
             <h2 className="text-2xl sm:text-xl font-bold">{t.payslip}</h2>
           </div>
 
@@ -782,20 +514,7 @@ const SalaryCalculator = () => {
       dir={language === "ar" ? "rtl" : "ltr"}
     >
       {/* Header conditionnel : n'affiche le header que pour les étapes 2 et 3 */}
-      {step !== 1 && (
-        <header className="w-full bg-transparent text-blue-600">
-          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <LayoutDashboard size={24} />
-              <span className="font-bold text-xl sm:text-lg">
-                {t.dashboard}
-              </span>
-            </div>
-            {/* Vous pouvez ajouter d'autres éléments au header ici si nécessaire */}
-          </div>
-        </header>
-      )}
-
+      {step !== 1 && <Header t={t} />} {/* Utilisation du composant Header */}
       {/* Contenu Principal */}
       <main className={`flex-1 container mx-auto ${step !== 1 ? "mt-0" : ""}`}>
         {renderStep()}
