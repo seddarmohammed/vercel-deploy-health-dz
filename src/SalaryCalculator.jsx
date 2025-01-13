@@ -16,7 +16,7 @@ import html2canvas from "html2canvas";
 
 const SalaryCalculator = () => {
   const [step, setStep] = useState(1);
-  const [language, setLanguage] = useState("fr");
+  const [language, setLanguage] = useState("ar"); // Initialiser en arabe
   const [selectedCorps, setSelectedCorps] = useState("");
   const [selectedGrade, setSelectedGrade] = useState("");
   const [selectedEchelon, setSelectedEchelon] = useState("");
@@ -472,28 +472,37 @@ const SalaryCalculator = () => {
     const results = calculateSalary(); // Définition de 'results'
 
     return (
-      <div className="space-y-6 pt-20 container mx-auto">
-        <div className="bg-white rounded-lg p-4 sm:p-6" ref={payslipRef}>
-          <div className="flex justify-between items-center mb-6">
+      <div className="space-y-6 pt-6 container mx-auto">
+        {" "}
+        {/* Réduction du padding-top de pt-24 à pt-12 */}
+        <div
+          className="bg-white rounded-lg p-6 sm:p-8 shadow-md"
+          ref={payslipRef}
+        >
+          <div className="flex justify-between items-center mb-4">
+            {" "}
+            {/* Réduction de mb-6 à mb-4 */}
             <h2 className="text-2xl sm:text-xl font-bold">{t.payslip}</h2>
           </div>
 
           <div className="space-y-6">
             {/* Employee Information Section */}
             <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                  <h3 className="font-bold w-full sm:w-1/3">{t.corps}</h3>
-                  <p className="w-full sm:w-2/3">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:space-x-6">
+                {/* Corps */}
+                <div className="flex-1">
+                  <h3 className="font-bold">{t.corps}</h3>
+                  <p className="mt-1">
                     {corpsList.find(
                       (corp) => corp.id === parseInt(selectedCorps)
                     )?.[`name_${language}`] || "-"}
                   </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                  <h3 className="font-bold w-full sm:w-1/3">{t.grade}</h3>
-                  <p className="w-full sm:w-2/3 flex items-center">
+                {/* Grade */}
+                <div className="flex-1">
+                  <h3 className="font-bold">{t.grade}</h3>
+                  <p className="mt-1 flex items-center">
                     {gradesList.find(
                       (grade) => grade.id === parseInt(selectedGrade)
                     )?.[`name_${language}`] || "-"}
@@ -503,14 +512,15 @@ const SalaryCalculator = () => {
                   </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                  <h3 className="font-bold w-full sm:w-1/3">
+                {/* Échelon & Indice */}
+                <div className="flex-1">
+                  <h3 className="font-bold">
                     {t.echelon} & {t.index}
                   </h3>
-                  <div className="w-full sm:w-2/3 flex space-x-4">
-                    <p>{selectedEchelon ? `${selectedEchelon}` : "-"}</p>
-                    <p>{getEchelonIndex()}</p>
-                  </div>
+                  <p className="mt-1">
+                    {selectedEchelon ? `${selectedEchelon}` : "-"} -{" "}
+                    {getEchelonIndex()}
+                  </p>
                 </div>
               </div>
             </div>
@@ -579,9 +589,7 @@ const SalaryCalculator = () => {
 
   const renderWelcome = () => (
     <div
-      className={`flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-b from-blue-50 to-white ${
-        language === "ar" ? "text-right font-arabic" : "text-left font-sans"
-      }`}
+      className={`flex flex-col items-center justify-center min-h-screen bg-transparent`}
       dir={language === "ar" ? "rtl" : "ltr"}
     >
       <Card className="w-full max-w-md">
@@ -598,13 +606,20 @@ const SalaryCalculator = () => {
           </CardTitle>
 
           {/* Description Animée */}
-          <p className="text-center mb-8 transition-opacity duration-500">
-            {t.descriptions[descriptionIndex]}
-          </p>
+          <div className="text-center mb-8">
+            <p className="transition-opacity duration-500">
+              {t.descriptions[descriptionIndex]}
+            </p>
+            {language === "ar" && (
+              <p className="text-sm sm:text-base text-gray-600">
+                {translations["fr"].descriptions[descriptionIndex]}
+              </p>
+            )}
+          </div>
 
           {/* Boutons de Sélection de Langue */}
-          <div className="grid grid-cols-2 gap-4 mb-8 w-full">
-            {["fr", "ar"].map((lang) => (
+          <div className="flex flex-col gap-4 mb-8 w-full">
+            {["ar", "fr"].map((lang) => (
               <button
                 key={lang}
                 onClick={() => {
@@ -646,7 +661,7 @@ const SalaryCalculator = () => {
   );
 
   const renderForm = () => (
-    <div className="min-h-screen p-4 bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen p-4 bg-transparent">
       <Card className="w-full max-w-xl mx-auto">
         <CardContent className="pt-6">
           <button
@@ -761,14 +776,14 @@ const SalaryCalculator = () => {
 
   return (
     <div
-      className={`min-h-screen flex flex-col ${
+      className={`min-h-screen flex flex-col bg-gradient-to-b from-white to-blue-50 ${
         language === "ar" ? "font-arabic" : "font-sans"
       }`}
       dir={language === "ar" ? "rtl" : "ltr"}
     >
       {/* Header conditionnel : n'affiche le header que pour les étapes 2 et 3 */}
       {step !== 1 && (
-        <header className="w-full bg-blue-600 text-white">
+        <header className="w-full bg-transparent text-blue-600">
           <div className="container mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <LayoutDashboard size={24} />
@@ -782,7 +797,7 @@ const SalaryCalculator = () => {
       )}
 
       {/* Contenu Principal */}
-      <main className={`flex-1 container mx-auto mt-${step !== 1 ? "0" : "0"}`}>
+      <main className={`flex-1 container mx-auto ${step !== 1 ? "mt-0" : ""}`}>
         {renderStep()}
       </main>
     </div>
