@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+// src/SalaryCalculator.jsx
+import React, { useState, useEffect, useRef } from "react";
 import {
   ChevronRight,
   Languages,
@@ -6,10 +7,12 @@ import {
   Download,
   Calculator,
   DollarSign,
-  LayoutDashboard, // Remplacé Dashboard par LayoutDashboard
+  LayoutDashboard,
 } from "lucide-react";
 import { Card, CardTitle, CardContent } from "./components/ui/card";
 import { Alert, AlertDescription } from "./components/ui/alert";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 const SalaryCalculator = () => {
   const [step, setStep] = useState(1);
@@ -19,6 +22,13 @@ const SalaryCalculator = () => {
   const [selectedEchelon, setSelectedEchelon] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [filteredGrades, setFilteredGrades] = useState([]);
+
+  // États pour les animations du titre et de la description
+  const [titleIndex, setTitleIndex] = useState(0);
+  const [descriptionIndex, setDescriptionIndex] = useState(0);
+
+  // Référence pour la fiche de paie
+  const payslipRef = useRef();
 
   const translations = {
     fr: {
@@ -52,6 +62,16 @@ const SalaryCalculator = () => {
       grossSalary: "Salaire brut",
       back: "Retour",
       dashboard: "Tableau de bord",
+      titles: [
+        "Bienvenue sur le Calculateur de Salaire",
+        "Calculez votre salaire facilement",
+        "Optimisez votre rémunération",
+      ],
+      descriptions: [
+        "Sélectionnez votre langue pour commencer.",
+        "Choisissez votre corps, grade et échelon.",
+        "Obtenez une fiche de paie détaillée.",
+      ],
     },
     ar: {
       welcome: "حاسبة الراتب",
@@ -84,6 +104,16 @@ const SalaryCalculator = () => {
       grossSalary: "الراتب الإجمالي",
       back: "عودة",
       dashboard: "لوحة التحكم",
+      titles: [
+        "مرحباً بكم في حاسبة الراتب",
+        "احسب راتبك بسهولة",
+        "حسن مكافأتك",
+      ],
+      descriptions: [
+        "اختر لغتك للبدء.",
+        "اختر السلك والدرجة والرتبة.",
+        "احصل على ورقة راتب مفصلة.",
+      ],
     },
   };
 
@@ -274,25 +304,21 @@ const SalaryCalculator = () => {
   const getName = (item) => {
     if (!item) return "-";
     const name = language === "fr" ? item.name_fr : item.name_ar;
-    console.log(`getName(${item.id}) [${language}]:`, name);
     return name || "-";
   };
 
   // Gestion des changements de sélection
   const handleCorpsChange = (corpId) => {
-    console.log("Selected Corps ID:", corpId); // Pour débogage
     setSelectedCorps(corpId);
     setSelectedGrade("");
     setSelectedEchelon("");
     const grades = gradesList.filter(
       (grade) => grade.corp_id === parseInt(corpId)
     );
-    console.log("Filtered Grades:", grades); // Pour débogage
     setFilteredGrades(grades);
   };
 
   const handleGradeChange = (gradeId) => {
-    console.log("Selected Grade ID:", gradeId); // Pour débogage
     setSelectedGrade(gradeId);
     setSelectedEchelon("");
     // Si vous avez une logique supplémentaire pour les échelons, ajoutez-la ici
@@ -371,14 +397,85 @@ const SalaryCalculator = () => {
     </div>
   );
 
+  // Effet pour les animations du titre et de la description
+  useEffect(() => {
+    const titleInterval = setInterval(() => {
+      setTitleIndex((prevIndex) => (prevIndex + 1) % t.titles.length);
+    }, 2000);
+
+    const descriptionInterval = setInterval(() => {
+      setDescriptionIndex(
+        (prevIndex) => (prevIndex + 1) % t.descriptions.length
+      );
+    }, 2000);
+
+    return () => {
+      clearInterval(titleInterval);
+      clearInterval(descriptionInterval);
+    };
+  }, [t.titles.length, t.descriptions.length]);
+
+  /**
+   * Fonction pour exporter la fiche de paie en PDF.
+   */
+  const exportPDF = () => {
+    const input = payslipRef.current;
+    if (!input) {
+      alert("Impossible de trouver la section à exporter.");
+      return;
+    }
+
+    html2canvas(input, { scale: 2 })
+      .then((canvas) => {
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF({
+          orientation: "portrait",
+          unit: "pt",
+          format: "a4",
+        });
+
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+        pdf.save("fiche-de-paie.pdf");
+      })
+      .catch((error) => {
+        console.error("Erreur lors de la génération du PDF :", error);
+        alert("Une erreur est survenue lors de l'exportation en PDF.");
+      });
+  };
+
+  /**
+   * Renders the appropriate component based on the current step.
+   *
+   * @returns {JSX.Element} The component corresponding to the current step:
+   * - Step 1: Welcome screen
+   * - Step 2: Form for user input
+   * - Step 3: Results display
+   */
+  const renderStep = () => {
+    switch (step) {
+      case 1:
+        return renderWelcome();
+      case 2:
+        return renderForm();
+      case 3:
+        return renderResults();
+      default:
+        return renderWelcome();
+    }
+  };
+
   const renderResults = () => {
-    const results = calculateSalary(); // Ajout de la définition de 'results'
+    const results = calculateSalary(); // Définition de 'results'
 
     return (
-      <div className="space-y-6 pt-20">
-        <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className="space-y-6 pt-20 container mx-auto">
+        <div className="bg-white rounded-lg p-4 sm:p-6" ref={payslipRef}>
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">{t.payslip}</h2>
+            <h2 className="text-2xl sm:text-xl font-bold">{t.payslip}</h2>
           </div>
 
           <div className="space-y-6">
@@ -386,8 +483,8 @@ const SalaryCalculator = () => {
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                  <h3 className="font-bold w-1/3">{t.corps}</h3>
-                  <p className="w-2/3">
+                  <h3 className="font-bold w-full sm:w-1/3">{t.corps}</h3>
+                  <p className="w-full sm:w-2/3">
                     {corpsList.find(
                       (corp) => corp.id === parseInt(selectedCorps)
                     )?.[`name_${language}`] || "-"}
@@ -395,8 +492,8 @@ const SalaryCalculator = () => {
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                  <h3 className="font-bold w-1/3">{t.grade}</h3>
-                  <p className="w-2/3 flex items-center">
+                  <h3 className="font-bold w-full sm:w-1/3">{t.grade}</h3>
+                  <p className="w-full sm:w-2/3 flex items-center">
                     {gradesList.find(
                       (grade) => grade.id === parseInt(selectedGrade)
                     )?.[`name_${language}`] || "-"}
@@ -407,10 +504,10 @@ const SalaryCalculator = () => {
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                  <h3 className="font-bold w-1/3">
+                  <h3 className="font-bold w-full sm:w-1/3">
                     {t.echelon} & {t.index}
                   </h3>
-                  <div className="w-2/3 flex space-x-4">
+                  <div className="w-full sm:w-2/3 flex space-x-4">
                     <p>{selectedEchelon ? `${selectedEchelon}` : "-"}</p>
                     <p>{getEchelonIndex()}</p>
                   </div>
@@ -420,10 +517,12 @@ const SalaryCalculator = () => {
 
             {/* Salary Details Section */}
             <div className="space-y-4">
-              <h3 className="font-bold text-lg">{t.baseSalary}</h3>
+              <h3 className="font-bold text-lg sm:text-base">{t.baseSalary}</h3>
               <PayslipSection label={t.baseSalary} value={results.baseSalary} />
 
-              <h3 className="font-bold text-lg mt-6">{t.allowances}</h3>
+              <h3 className="font-bold text-lg sm:text-base mt-6">
+                {t.allowances}
+              </h3>
               <PayslipSection
                 label={t.generalAllowance}
                 value={results.generalAllowance}
@@ -444,7 +543,9 @@ const SalaryCalculator = () => {
                 />
               </div>
 
-              <h3 className="font-bold text-lg mt-6">{t.deductions}</h3>
+              <h3 className="font-bold text-lg sm:text-base mt-6">
+                {t.deductions}
+              </h3>
               <PayslipSection
                 label={t.mutualInsurance}
                 value={results.mutualInsurance}
@@ -459,13 +560,10 @@ const SalaryCalculator = () => {
                 <PayslipSection label={t.netSalary} value={results.netSalary} />
               </div>
 
+              {/* Bouton d'Exportation en PDF */}
               <div className="flex justify-end mt-6">
                 <button
-                  onClick={() => {
-                    alert(
-                      "La fonctionnalité d'export PDF n'est pas encore implémentée."
-                    );
-                  }}
+                  onClick={exportPDF}
                   className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
                 >
                   <Download size={20} />
@@ -480,8 +578,13 @@ const SalaryCalculator = () => {
   };
 
   const renderWelcome = () => (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-b from-blue-50 to-white">
-      <Card className="max-w-md w-full">
+    <div
+      className={`flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-b from-blue-50 to-white ${
+        language === "ar" ? "text-right font-arabic" : "text-left font-sans"
+      }`}
+      dir={language === "ar" ? "rtl" : "ltr"}
+    >
+      <Card className="w-full max-w-md">
         <CardContent className="pt-6">
           <div className="flex justify-center mb-8">
             <div className="p-4 bg-blue-100 rounded-full">
@@ -489,18 +592,30 @@ const SalaryCalculator = () => {
             </div>
           </div>
 
-          <CardTitle className="text-center mb-8">{t.welcome}</CardTitle>
+          {/* Titre Animé */}
+          <CardTitle className="text-center mb-4 transition-opacity duration-500">
+            {t.titles[titleIndex]}
+          </CardTitle>
 
-          <div className="grid grid-cols-2 gap-4 mb-8">
+          {/* Description Animée */}
+          <p className="text-center mb-8 transition-opacity duration-500">
+            {t.descriptions[descriptionIndex]}
+          </p>
+
+          {/* Boutons de Sélection de Langue */}
+          <div className="grid grid-cols-2 gap-4 mb-8 w-full">
             {["fr", "ar"].map((lang) => (
               <button
                 key={lang}
-                onClick={() => setLanguage(lang)}
+                onClick={() => {
+                  setLanguage(lang);
+                  simulateLoading(() => setStep(2)); // Redirection vers la page de sélection du corps
+                }}
                 className={`px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 ${
                   language === lang
                     ? "bg-blue-600 text-white shadow-lg transform scale-[1.02]"
                     : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                }`}
+                } text-sm sm:text-base`}
               >
                 <Languages size={20} />
                 {lang === "fr" ? "Français" : "العربية"}
@@ -508,9 +623,10 @@ const SalaryCalculator = () => {
             ))}
           </div>
 
-          <button
+          {/* Bouton de Suivant (Optionnel) */}
+          {/* <button
             onClick={() => simulateLoading(() => setStep(2))}
-            className="w-full bg-blue-600 text-white px-6 py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl disabled:opacity-50"
+            className="w-full bg-blue-600 text-white px-4 py-3 sm:px-6 sm:py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl disabled:opacity-50 text-base sm:text-lg"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -523,7 +639,7 @@ const SalaryCalculator = () => {
                 />
               </>
             )}
-          </button>
+          </button> */}
         </CardContent>
       </Card>
     </div>
@@ -531,11 +647,11 @@ const SalaryCalculator = () => {
 
   const renderForm = () => (
     <div className="min-h-screen p-4 bg-gradient-to-b from-blue-50 to-white">
-      <Card className="max-w-xl mx-auto">
+      <Card className="w-full max-w-xl mx-auto">
         <CardContent className="pt-6">
           <button
             onClick={() => setStep(1)}
-            className="mb-6 text-blue-600 flex items-center gap-2 hover:text-blue-700 transition-colors"
+            className="mb-6 text-blue-600 flex items-center gap-2 hover:text-blue-700 transition-colors text-sm sm:text-base"
           >
             <ArrowLeft className={language === "ar" ? "rotate-180" : ""} />
             {t.back}
@@ -549,7 +665,7 @@ const SalaryCalculator = () => {
                   id="corps-select"
                   value={selectedCorps}
                   onChange={(e) => handleCorpsChange(e.target.value)}
-                  className="block appearance-none w-full bg-white border border-gray-300 hover:border-blue-300 px-4 py-3 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline"
+                  className="block appearance-none w-full bg-white border border-gray-300 hover:border-blue-300 px-4 py-3 sm:px-6 sm:py-4 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline text-sm sm:text-base"
                 >
                   <option value="">{t.selectCorps}</option>
                   {corpsList.map((corp) => (
@@ -570,7 +686,7 @@ const SalaryCalculator = () => {
                     id="grade-select"
                     value={selectedGrade}
                     onChange={(e) => handleGradeChange(e.target.value)}
-                    className="block appearance-none w-full bg-white border border-gray-300 hover:border-blue-300 px-4 py-3 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline"
+                    className="block appearance-none w-full bg-white border border-gray-300 hover:border-blue-300 px-4 py-3 sm:px-6 sm:py-4 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline text-sm sm:text-base"
                   >
                     <option value="">{t.selectGrade}</option>
                     {filteredGrades.map((grade) => (
@@ -600,7 +716,7 @@ const SalaryCalculator = () => {
                       id="echelon-select"
                       value={selectedEchelon}
                       onChange={(e) => setSelectedEchelon(e.target.value)}
-                      className="block appearance-none w-full bg-white border border-gray-300 hover:border-blue-300 px-4 py-3 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline"
+                      className="block appearance-none w-full bg-white border border-gray-300 hover:border-blue-300 px-4 py-3 sm:px-6 sm:py-4 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline text-sm sm:text-base"
                     >
                       <option value="">{t.selectEchelon}</option>
                       {corpsData[selectedCorps]?.grades[
@@ -623,7 +739,7 @@ const SalaryCalculator = () => {
               {selectedEchelon && (
                 <button
                   onClick={() => simulateLoading(() => setStep(3))}
-                  className="w-full bg-blue-600 text-white px-6 py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
+                  className="w-full bg-blue-600 text-white px-4 py-3 sm:px-6 sm:py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 text-base sm:text-lg"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -643,43 +759,32 @@ const SalaryCalculator = () => {
     </div>
   );
 
-  /**
-   * Renders the appropriate component based on the current step.
-   *
-   * @returns {JSX.Element} The component corresponding to the current step:
-   * - Step 1: Welcome screen
-   * - Step 2: Form for user input
-   * - Step 3: Results display
-   */
-  const renderStep = () => {
-    switch (step) {
-      case 1:
-        return renderWelcome();
-      case 2:
-        return renderForm();
-      case 3:
-        return renderResults();
-      default:
-        return renderWelcome();
-    }
-  };
-
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header Fixe */}
-      <header className="fixed top-0 left-0 w-full bg-white shadow-md z-50">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <LayoutDashboard size={24} className="text-blue-600" />{" "}
-            {/* Utilisation de LayoutDashboard */}
-            <span className="font-bold text-xl">{t.dashboard}</span>
+    <div
+      className={`min-h-screen flex flex-col ${
+        language === "ar" ? "font-arabic" : "font-sans"
+      }`}
+      dir={language === "ar" ? "rtl" : "ltr"}
+    >
+      {/* Header conditionnel : n'affiche le header que pour les étapes 2 et 3 */}
+      {step !== 1 && (
+        <header className="w-full bg-blue-600 text-white">
+          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <LayoutDashboard size={24} />
+              <span className="font-bold text-xl sm:text-lg">
+                {t.dashboard}
+              </span>
+            </div>
+            {/* Vous pouvez ajouter d'autres éléments au header ici si nécessaire */}
           </div>
-          {/* Vous pouvez ajouter d'autres éléments au header ici */}
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* Contenu Principal */}
-      <main className="flex-1 mt-16">{renderStep()}</main>
+      <main className={`flex-1 container mx-auto mt-${step !== 1 ? "0" : "0"}`}>
+        {renderStep()}
+      </main>
     </div>
   );
 };

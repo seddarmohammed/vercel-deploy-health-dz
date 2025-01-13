@@ -21,9 +21,13 @@ module.exports = {
           foreground: "hsl(var(--card-foreground))",
         },
       },
+      fontFamily: {
+        arabic: ['Cairo', 'sans-serif'],
+        sans: ['Inter', 'sans-serif'],
+      },
     },
   },
   plugins: [
     require('tailwindcss-rtl'),
   ],
-}
+};
