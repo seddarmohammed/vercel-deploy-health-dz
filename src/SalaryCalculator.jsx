@@ -6,7 +6,13 @@ import {
   ArrowLeft,
   Download,
   Calculator,
-} from "lucide-react"; // Removed BadgeDollarSign
+  DollarSign,
+  Building,
+  UserCircle,
+  TrendingUp,
+} from "lucide-react";
+import { Card, CardTitle, CardContent } from "./components/ui/card";
+import { Alert, AlertDescription } from "./components/ui/alert";
 
 const SalaryCalculator = () => {
   const [step, setStep] = useState(1);
@@ -14,6 +20,7 @@ const SalaryCalculator = () => {
   const [selectedCorps, setSelectedCorps] = useState("");
   const [selectedGrade, setSelectedGrade] = useState("");
   const [selectedEchelon, setSelectedEchelon] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const translations = {
     fr: {
@@ -160,6 +167,34 @@ const SalaryCalculator = () => {
 
   const t = translations[language];
 
+  const simulateLoading = (callback) => {
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      callback();
+    }, 800);
+  };
+
+  const SelectCard = ({ icon: Icon, title, value, onClick, isSelected }) => (
+    <div
+      onClick={onClick}
+      className={`p-4 rounded-xl transition-all duration-200 cursor-pointer ${
+        isSelected
+          ? "bg-blue-50 border-2 border-blue-500 shadow-md transform scale-[1.02]"
+          : "bg-white border border-gray-200 hover:border-blue-300 hover:shadow-md"
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <div className={`${isSelected ? "text-blue-500" : "text-gray-500"}`}>
+          <Icon size={24} />
+        </div>
+        <div className="flex-1">
+          <div className="text-sm text-gray-500">{title}</div>
+          <div className="font-medium">{value}</div>
+        </div>
+      </div>
+    </div>
+  );
   const getGradeCategory = () => {
     if (selectedCorps && selectedGrade) {
       return corpsData[selectedCorps].grades[selectedGrade].category;
@@ -321,183 +356,191 @@ const SalaryCalculator = () => {
   };
 
   const renderWelcome = () => (
-    <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
-      <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
-        <img
-          src="/api/placeholder/300/200"
-          alt="Welcome"
-          className="mx-auto mb-8 rounded-lg shadow-md"
-        />
-        <h1
-          className={`text-3xl font-bold mb-8 ${
-            language === "ar" ? "font-arabic" : ""
-          }`}
-        >
-          {t.welcome}
-        </h1>
-
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <button
-            onClick={() => setLanguage("fr")}
-            className={`px-4 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors ${
-              language === "fr"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            <Languages size={20} />
-            Français
-          </button>
-          <button
-            onClick={() => setLanguage("ar")}
-            className={`px-4 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors ${
-              language === "ar"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            <Languages size={20} />
-            العربية
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          <button
-            onClick={() => setStep(2)}
-            className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"
-          >
-            {t.next}
-            <ChevronRight
-              size={20}
-              className={language === "ar" ? "rotate-180" : ""}
-            />
-          </button>
-
-          <div className="text-sm text-gray-500">
-            {language === "fr"
-              ? "Calculez votre salaire en quelques clics"
-              : "احسب راتبك في خطوات بسيطة"}
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-b from-blue-50 to-white">
+      <Card className="max-w-md w-full">
+        <CardContent className="pt-6">
+          <div className="flex justify-center mb-8">
+            <div className="p-4 bg-blue-100 rounded-full">
+              <DollarSign size={32} className="text-blue-600" />
+            </div>
           </div>
-        </div>
-      </div>
+
+          <CardTitle className="text-center mb-8">{t.welcome}</CardTitle>
+
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            {["fr", "ar"].map((lang) => (
+              <button
+                key={lang}
+                onClick={() => setLanguage(lang)}
+                className={`px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 ${
+                  language === lang
+                    ? "bg-blue-600 text-white shadow-lg transform scale-[1.02]"
+                    : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <Languages size={20} />
+                {lang === "fr" ? "Français" : "العربية"}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => simulateLoading(() => setStep(2))}
+            className="w-full bg-blue-600 text-white px-6 py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl disabled:opacity-50"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
+            ) : (
+              <>
+                {t.next}
+                <ChevronRight
+                  className={language === "ar" ? "rotate-180" : ""}
+                />
+              </>
+            )}
+          </button>
+        </CardContent>
+      </Card>
     </div>
   );
 
   const renderForm = () => (
-    <div className="min-h-screen p-4">
-      <div className="max-w-xl mx-auto bg-white rounded-lg shadow-lg p-6">
-        <button
-          onClick={() => setStep(1)}
-          className="mb-6 text-blue-600 flex items-center gap-2 hover:text-blue-700 transition-colors"
-        >
-          <ArrowLeft
-            size={20}
-            className={language === "ar" ? "rotate-180" : ""}
-          />
-          {t.back}
-        </button>
+    <div className="min-h-screen p-4 bg-gradient-to-b from-blue-50 to-white">
+      <Card className="max-w-xl mx-auto">
+        <CardContent className="pt-6">
+          <button
+            onClick={() => setStep(1)}
+            className="mb-6 text-blue-600 flex items-center gap-2 hover:text-blue-700 transition-colors"
+          >
+            <ArrowLeft className={language === "ar" ? "rotate-180" : ""} />
+            {t.back}
+          </button>
 
-        <h2
-          className={`text-2xl font-bold mb-6 ${
-            language === "ar" ? "text-right" : ""
-          }`}
-        >
-          {t.corps}
-        </h2>
+          <div className="space-y-6">
+            <div className="grid gap-4">
+              <SelectCard
+                icon={Building}
+                title={t.corps}
+                value={selectedCorps || t.selectCorps}
+                onClick={() => {
+                  document.getElementById("corps-select").click();
+                }}
+                isSelected={!!selectedCorps}
+              />
 
-        <div className="space-y-6">
-          {/* Corps Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t.corps}
-            </label>
-            <select
-              value={selectedCorps}
-              onChange={(e) => {
-                setSelectedCorps(e.target.value);
-                setSelectedGrade("");
-                setSelectedEchelon("");
-              }}
-              className="w-full p-3 border rounded-lg"
-            >
-              <option value="">{t.selectCorps}</option>
-              {Object.keys(corpsData).map((corp) => (
-                <option key={corp} value={corp}>
-                  {corp}
-                </option>
-              ))}
-            </select>
-          </div>
+              <select
+                id="corps-select"
+                value={selectedCorps}
+                onChange={(e) => {
+                  setSelectedCorps(e.target.value);
+                  setSelectedGrade("");
+                  setSelectedEchelon("");
+                }}
+                className="hidden"
+              >
+                <option value="">{t.selectCorps}</option>
+                {Object.keys(corpsData).map((corp) => (
+                  <option key={corp} value={corp}>
+                    {corp}
+                  </option>
+                ))}
+              </select>
 
-          {selectedCorps && (
-            <div className="space-y-4">
-              {/* Grade Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t.grade}
-                </label>
-                <select
-                  value={selectedGrade}
-                  onChange={(e) => {
-                    setSelectedGrade(e.target.value);
-                    setSelectedEchelon("");
-                  }}
-                  className="w-full p-3 border rounded-lg"
-                >
-                  <option value="">{t.selectGrade}</option>
-                  {Object.keys(corpsData[selectedCorps].grades).map((grade) => (
-                    <option key={grade} value={grade}>
-                      {grade}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {selectedCorps && (
+                <>
+                  <SelectCard
+                    icon={UserCircle}
+                    title={t.grade}
+                    value={selectedGrade || t.selectGrade}
+                    onClick={() => {
+                      document.getElementById("grade-select").click();
+                    }}
+                    isSelected={!!selectedGrade}
+                  />
+
+                  <select
+                    id="grade-select"
+                    value={selectedGrade}
+                    onChange={(e) => {
+                      setSelectedGrade(e.target.value);
+                      setSelectedEchelon("");
+                    }}
+                    className="hidden"
+                  >
+                    <option value="">{t.selectGrade}</option>
+                    {Object.keys(corpsData[selectedCorps].grades).map(
+                      (grade) => (
+                        <option key={grade} value={grade}>
+                          {grade}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </>
+              )}
 
               {selectedGrade && (
                 <>
-                  {/* Category Display */}
-                  <div className="p-4 bg-gray-50 rounded-lg border">
-                    <span className="font-medium">{t.category}:</span>{" "}
-                    {corpsData[selectedCorps].grades[selectedGrade].category}
-                  </div>
+                  <Alert className="bg-blue-50 border-blue-200">
+                    <AlertDescription>
+                      {t.category}:{" "}
+                      {corpsData[selectedCorps].grades[selectedGrade].category}
+                    </AlertDescription>
+                  </Alert>
 
-                  {/* Echelon Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.echelon}
-                    </label>
-                    <select
-                      value={selectedEchelon}
-                      onChange={(e) => setSelectedEchelon(e.target.value)}
-                      className="w-full p-3 border rounded-lg"
-                    >
-                      <option value="">{t.selectEchelon}</option>
-                      {corpsData[selectedCorps].grades[
-                        selectedGrade
-                      ].echelons.map((echelon) => (
-                        <option key={echelon.number} value={echelon.number}>
-                          {t.echelon} {echelon.number} - {t.index}{" "}
-                          {echelon.index}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <SelectCard
+                    icon={TrendingUp} // Use the new icon here
+                    title={t.echelon}
+                    value={
+                      selectedEchelon
+                        ? `${t.echelon} ${selectedEchelon}`
+                        : t.selectEchelon
+                    }
+                    onClick={() => {
+                      document.getElementById("echelon-select").click();
+                    }}
+                    isSelected={!!selectedEchelon}
+                  />
 
-                  {selectedEchelon && (
-                    <button
-                      onClick={() => setStep(3)}
-                      className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"
-                    >
-                      <Calculator size={20} />
-                      {t.calculate}
-                    </button>
-                  )}
+                  <select
+                    id="echelon-select"
+                    value={selectedEchelon}
+                    onChange={(e) => setSelectedEchelon(e.target.value)}
+                    className="hidden"
+                  >
+                    <option value="">{t.selectEchelon}</option>
+                    {corpsData[selectedCorps].grades[
+                      selectedGrade
+                    ].echelons.map((echelon) => (
+                      <option key={echelon.number} value={echelon.number}>
+                        {t.echelon} {echelon.number} - {t.index} {echelon.index}
+                      </option>
+                    ))}
+                  </select>
                 </>
               )}
+
+              {selectedEchelon && (
+                <button
+                  onClick={() => simulateLoading(() => setStep(3))}
+                  className="w-full bg-blue-600 text-white px-6 py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
+                  ) : (
+                    <>
+                      <Calculator size={20} />
+                      {t.calculate}
+                    </>
+                  )}
+                </button>
+              )}
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 
@@ -513,13 +556,8 @@ const SalaryCalculator = () => {
         return renderWelcome();
     }
   };
-
   return (
-    <div
-      className={`min-h-screen bg-gray-100 ${
-        language === "ar" ? "rtl" : "ltr"
-      }`}
-    >
+    <div className={`min-h-screen ${language === "ar" ? "rtl" : "ltr"}`}>
       {renderStep()}
     </div>
   );
